@@ -133,5 +133,28 @@ namespace Allup1.Areas.Admin.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("Delete")]
+        public async Task<IActionResult> DeletePost(int? id)
+        {
+            if (id == null) return NotFound();
+            Category category = _context.Categories.Include(c => c.Children).Include(c => c.Parent)
+                .FirstOrDefault(c => c.IsDeleted == false && c.Id == id);
+            if (category == null) return NotFound();
+
+            category.IsDeleted = true;
+            if (category.Children.Count() > 0)
+            {
+                List<Category> children = category.Children.Where(c => c.IsDeleted == false).ToList();
+                foreach (Category ctgchild in children)
+                {
+                    ctgchild.IsDeleted = true;
+                }
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
